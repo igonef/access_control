@@ -1,0 +1,42 @@
+You need to implement three methods in your class:
+require_role_for(method)
+user_role(user) and
+allowed_model_params_for(role)
+
+Currently list of roles is harcoded into plugin. Will change.
+
+
+class Project < ActiveRecord::Base
+  ### ACL stuff ###
+  def require_role_for(method)
+    case method
+    when [:destroy, :invite_user!, :update_attributes, :admin]
+      :admin
+    else
+      :external
+    end
+  end
+
+  def user_role(user)
+    return :guest unless user.activated?
+    return :admin if company.is_admin?(user)
+    return :user if company.users.include?(user)
+    return :external if users.include?(user)
+    :guest
+  end
+
+  def allowed_model_params_for(role)
+    case role
+    when :anonymous
+      []
+    when :guest
+      [:name, :author, :uploaded_data, :info, :folder, :original_folder]
+    when :user
+      [:public]
+    else
+      []
+    end
+  end
+  ### /ACL stuff ###
+end
+
